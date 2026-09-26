@@ -1,0 +1,32 @@
+{
+	"$schema": "https://json.schemastore.org/nest-cli",
+	"collection": "@nestjs/schematics",
+	"sourceRoot": "apps/furniture-api/src",
+	"compilerOptions": {
+		"deleteOutDir": true,
+		"webpack": true,
+		"tsConfigPath": "apps/furniture-api/tsconfig.app.json"
+	},
+	"monorepo": true,
+	"root": "apps/furniture-api",
+	"projects": {
+		"furniture-api": {
+			"type": "application",
+			"root": "apps/furniture-api",
+			"entryFile": "main",
+			"sourceRoot": "apps/furniture-api/src",
+			"compilerOptions": {
+				"tsConfigPath": "apps/furniture-api/tsconfig.app.json"
+			}
+		},
+		"furniture-batch": {
+			"type": "application",
+			"root": "apps/furniture-batch",
+			"entryFile": "main",
+			"sourceRoot": "apps/furniture-batch/src",
+			"compilerOptions": {
+				"tsConfigPath": "apps/furniture-batch/tsconfig.app.json"
+			}
+		}
+	}
+}
