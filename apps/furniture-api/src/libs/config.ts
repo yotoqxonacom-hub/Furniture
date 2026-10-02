@@ -36,9 +36,19 @@ export const availableNotificationSorts = ['createdAt', 'updatedAt'];
 // IMAGE CONFIGURATION (config.js)
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
+import { mkdirSync } from 'fs';
 import { T } from './types/common';
 
 export const validMimeTypes = ['image/png', 'image/jpg', 'image/jpeg'];
+export const validUploadTargets = ['member', 'product', 'article'];
+
+/** Returns a safe upload folder for the target (creating it on first use) or throws */
+export const prepareUploadFolder = (target: string): string => {
+	if (!validUploadTargets.includes(target)) throw new Error('Upload failed!');
+	const folder = `uploads/${target}`;
+	mkdirSync(folder, { recursive: true });
+	return folder;
+};
 export const getSerialForImage = (filename: string) => {
 	const ext = path.parse(filename).ext;
 	return uuidv4() + ext;

@@ -16,6 +16,7 @@ import { MemberType } from '../../libs/enums/member.enum';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { MemberUpdate } from '../../libs/dto/member/member.update';
 import {
+	prepareUploadFolder,
 	getSerialForImage,
 	shapeIntoMongoObjectId,
 	validMimeTypes,
@@ -142,7 +143,7 @@ export class MemberResolver {
 		if (!validMime) throw new Error(Message.PROVIDE_ALLOWED_FORMAT);
 
 		const imageName = getSerialForImage(filename);
-		const url = `uploads/${target}/${imageName}`;
+		const url = `${prepareUploadFolder(target)}/${imageName}`;
 		const stream = file.createReadStream();
 
 		const result = await new Promise((resolve, reject) => {
@@ -178,7 +179,7 @@ export class MemberResolver {
 					if (!validMime) throw new Error(Message.PROVIDE_ALLOWED_FORMAT);
 
 					const imageName = getSerialForImage(filename);
-					const url = `uploads/${target}/${imageName}`;
+					const url = `${prepareUploadFolder(target)}/${imageName}`;
 					const stream = uploadedFile.createReadStream();
 
 					const result = await new Promise((resolve, reject) => {
