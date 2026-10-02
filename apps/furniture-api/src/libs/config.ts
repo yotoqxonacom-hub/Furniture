@@ -30,6 +30,8 @@ export const availableProductSorts = [
 ];
 export const availableCommentSorts = ['createdAt', 'updatedAt'];
 export const availableReportSorts = ['createdAt', 'updatedAt'];
+export const availableNoticeSorts = ['createdAt', 'updatedAt', 'noticeTitle'];
+export const availableNotificationSorts = ['createdAt', 'updatedAt'];
 
 // IMAGE CONFIGURATION (config.js)
 import { v4 as uuidv4 } from 'uuid';
@@ -162,5 +164,23 @@ export const lookupVisit = {
 		localField: 'visitedProduct.memberId',
 		foreignField: '_id',
 		as: 'visitedProduct.memberData',
+	},
+};
+
+export const lookupAuthor = {
+	$lookup: {
+		from: 'members',
+		localField: 'authorId',
+		foreignField: '_id',
+		as: 'authorData',
+	},
+};
+
+export const lookupReceiver = {
+	$lookup: {
+		from: 'members',
+		localField: 'receiverId',
+		foreignField: '_id',
+		as: 'receiverData',
 	},
 };

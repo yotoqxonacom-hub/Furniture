@@ -1,3 +1,4 @@
+import { NotificationModule } from '../notification/notification.module';
 import { Module } from '@nestjs/common';
 import { ProductResolver } from './product.resolver';
 import { ProductService } from './product.service';
@@ -12,6 +13,7 @@ import { LikeModule } from '../like/like.module';
 	imports: [
 		MongooseModule.forFeature([{ name: 'Product', schema: ProductSchema }]),
 		AuthModule,
+		NotificationModule,
 		ViewModule,
 		MemberModule,
 		LikeModule,

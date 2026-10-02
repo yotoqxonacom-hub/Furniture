@@ -1,3 +1,5 @@
+import { NotificationService } from '../notification/notification.service';
+import { NotificationGroup, NotificationType } from '../../libs/enums/notification.enum';
 import {
 	BadRequestException,
 	Injectable,
@@ -34,6 +36,7 @@ export class BoardArticleService {
 		private readonly memberService: MemberService,
 		private readonly viewService: ViewService,
 		private likeService: LikeService,
+		private readonly notificationService: NotificationService,
 	) {}
 
 	public async createBoardArticle(
@@ -188,6 +191,14 @@ export class BoardArticleService {
 
 		// LIKE TOGGLE via Like modules
 		const modifier: number = await this.likeService.toggleLike(input);
+		if (modifier === 1) {
+			await this.notificationService.notifyTarget({
+				notificationType: NotificationType.LIKE,
+				notificationGroup: NotificationGroup.ARTICLE,
+				authorId: memberId,
+				refId: likeRefId,
+			});
+		}
 		const result = await this.boardArticleStatsEditor({
 			_id: likeRefId,
 			targetKey: 'articleLikes',

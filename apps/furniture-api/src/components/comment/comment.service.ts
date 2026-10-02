@@ -1,3 +1,5 @@
+import { NotificationService } from '../notification/notification.service';
+import { NotificationGroup, NotificationType } from '../../libs/enums/notification.enum';
 import {
 	BadRequestException,
 	Injectable,
@@ -23,6 +25,7 @@ export class CommentService {
 		private readonly memberService: MemberService,
 		private readonly productService: ProductService,
 		private readonly boardArticleService: BoardArticleService,
+		private readonly notificationService: NotificationService,
 	) {}
 
 	public async createComment(memberId: ObjectId, input: CommentInput): Promise<Comment> {
@@ -61,6 +64,14 @@ export class CommentService {
 		}
 
 		if (!result) throw new InternalServerErrorException(Message.CREATE_FAILED);
+
+		await this.notificationService.notifyTarget({
+			notificationType: NotificationType.COMMENT,
+			notificationGroup: input.commentGroup as unknown as NotificationGroup,
+			authorId: memberId,
+			refId: input.commentRefId,
+		});
+
 		return result;
 	}
 

@@ -1,3 +1,4 @@
+import { NotificationModule } from '../notification/notification.module';
 import { Module } from '@nestjs/common';
 import { BoardArticleResolver } from './board-article.resolver';
 import { BoardArticleService } from './board-article.service';
@@ -12,6 +13,7 @@ import { LikeModule } from '../like/like.module';
 	imports: [
 		MongooseModule.forFeature([{ name: 'BoardArticle', schema: BoardArticleSchema }]),
 		AuthModule,
+		NotificationModule,
 		MemberModule,
 		ViewModule,
 		LikeModule,
