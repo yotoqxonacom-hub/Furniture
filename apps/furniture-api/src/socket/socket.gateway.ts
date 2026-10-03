@@ -35,7 +35,7 @@ export class SocketGateway implements OnGatewayInit {
 	server: Server;
 
 	public afterInit() {
-		this.logger.verbose(`WebSocket Server Initialized & total: [${this.summaryClient}]`);
+		this.logger.log(`WebSocket Server Initialized & total: [${this.summaryClient}]`);
 	}
 
 	/** token comes as a query param: ws://host:port?token=JWT ; guests have no valid token */
@@ -61,7 +61,7 @@ export class SocketGateway implements OnGatewayInit {
 		}
 
 		const clientNick: string = authMember?.memberNick ?? 'Guest';
-		this.logger.verbose(`Connected [${clientNick}] & total: [${this.summaryClient}]`);
+		this.logger.log(`Connected [${clientNick}] & total: [${this.summaryClient}]`);
 
 		const infoMsg: InfoPayload = {
 			event: 'info',
@@ -85,7 +85,7 @@ export class SocketGateway implements OnGatewayInit {
 		}
 
 		const clientNick: string = authMember?.memberNick ?? 'Guest';
-		this.logger.verbose(`Disconnected [${clientNick}] & total: [${this.summaryClient}]`);
+		this.logger.log(`Disconnected [${clientNick}] & total: [${this.summaryClient}]`);
 
 		const infoMsg: InfoPayload = {
 			event: 'info',
@@ -104,7 +104,7 @@ export class SocketGateway implements OnGatewayInit {
 		const authMember = this.clientsAuthMap.get(client) ?? null;
 		const newMessage: MessagePayload = { event: 'message', text, memberData: authMember };
 
-		this.logger.verbose(`NEW message: [${authMember?.memberNick ?? 'Guest'}] ${text}`);
+		this.logger.log(`NEW message: [${authMember?.memberNick ?? 'Guest'}] ${text}`);
 
 		this.messagesList.push(newMessage);
 		if (this.messagesList.length > HISTORY_LIMIT) this.messagesList.splice(0, this.messagesList.length - HISTORY_LIMIT);
