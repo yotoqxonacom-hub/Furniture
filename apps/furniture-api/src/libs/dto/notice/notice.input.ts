@@ -71,6 +71,11 @@ class ANISearch {
 	@Field(() => NoticeCategory, { nullable: true })
 	noticeCategory?: NoticeCategory;
 
+	/** "All" on a page that manages several categories (e.g. NOTICE + TERMS + INQUIRY, but not FAQ) */
+	@IsOptional()
+	@Field(() => [NoticeCategory], { nullable: true })
+	noticeCategoryList?: NoticeCategory[];
+
 	@IsOptional()
 	@Field(() => NoticeStatus, { nullable: true })
 	noticeStatus?: NoticeStatus;

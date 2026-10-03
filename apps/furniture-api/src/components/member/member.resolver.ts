@@ -7,7 +7,7 @@ import {
 	MembersInquiry,
 } from '../../libs/dto/member/member.input';
 import { Member, Members } from '../../libs/dto/member/member';
-import { UseGuards } from '@nestjs/common';
+import { BadRequestException, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { ObjectId } from 'mongoose';
@@ -120,8 +120,14 @@ export class MemberResolver {
 	@Roles(MemberType.ADMIN)
 	@UseGuards(RolesGuard)
 	@Mutation(() => Member)
-	public async updateMembersByAdmin(@Args('input') input: MemberUpdate): Promise<Member> {
+	public async updateMembersByAdmin(
+		@Args('input') input: MemberUpdate,
+		@AuthMember('_id') adminId: ObjectId,
+	): Promise<Member> {
 		console.log('Mutation: updateMembersByAdmin');
+		// an admin must not demote / block / delete themselves from the users table (instant lock-out)
+		const isSelf = String(input._id) === String(adminId);
+		if (isSelf && (input.memberType || input.memberStatus)) throw new BadRequestException(Message.NOT_ALLOWED_REQUEST);
 		return await this.memberService.updateMembersByAdmin(input);
 	}
 

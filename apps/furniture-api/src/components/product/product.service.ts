@@ -27,6 +27,7 @@ import {
 	lookupAuthMemberLiked,
 	lookupMember,
 	shapeIntoMongoObjectId,
+	textRegex,
 } from '../../libs/config';
 import { LikeService } from '../like/like.service';
 import { LikeInput } from '../../libs/dto/like/like.input';
@@ -207,7 +208,7 @@ export class ProductService {
 		if (squaresRange)
 			match.productSquare = { $gte: squaresRange.start, $lte: squaresRange.end };
 
-		if (text) match.productTitle = { $regex: new RegExp(text, 'i') };
+		if (text) match.productTitle = { $regex: textRegex(text) };
 		if (options) {
 			match['$or'] = options.map((ele) => {
 				return { [ele]: true };

@@ -54,6 +54,13 @@ export const getSerialForImage = (filename: string) => {
 	return uuidv4() + ext;
 };
 
+/**
+ * Case-insensitive "contains" regex from user text. Special characters are escaped,
+ * so a search like "sofa (2)" or "*" no longer throws "Invalid regular expression".
+ */
+export const textRegex = (text: string): RegExp =>
+	new RegExp(text.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+
 export const shapeIntoMongoObjectId = (target: any) => {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return typeof target === 'string' ? new ObjectId(target) : target;

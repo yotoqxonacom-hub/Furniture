@@ -24,6 +24,7 @@ import {
 	lookupAuthMemberLiked,
 	lookupMember,
 	shapeIntoMongoObjectId,
+	textRegex,
 } from '../../libs/config';
 import { LikeService } from '../like/like.service';
 import { LikeInput } from '../../libs/dto/like/like.input';
@@ -151,7 +152,7 @@ export class BoardArticleService {
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
 
 		if (articleCategory) match.articleCategory = articleCategory;
-		if (text) match.articleTitle = { $regex: new RegExp(text, 'i') };
+		if (text) match.articleTitle = { $regex: textRegex(text) };
 		if (input.search?.memberId) {
 			match.memberId = shapeIntoMongoObjectId(input.search.memberId);
 		}

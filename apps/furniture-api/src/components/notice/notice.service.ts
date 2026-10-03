@@ -7,7 +7,7 @@ import { NoticeUpdate } from '../../libs/dto/notice/notice.update';
 import { NoticeStatus } from '../../libs/enums/notice.enum';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { T } from '../../libs/types/common';
-import { lookupMember } from '../../libs/config';
+import { lookupMember, textRegex } from '../../libs/config';
 
 @Injectable()
 export class NoticeService {
@@ -60,17 +60,18 @@ export class NoticeService {
 	}
 
 	public async getAllNoticesByAdmin(input: AllNoticesInquiry): Promise<Notices> {
-		const { noticeCategory, noticeStatus, text } = input.search;
+		const { noticeCategory, noticeCategoryList, noticeStatus, text } = input.search;
 		const match: T = {};
+		// a single category wins; otherwise limit to the page's categories
 		if (noticeCategory) match.noticeCategory = noticeCategory;
+		else if (noticeCategoryList?.length) match.noticeCategory = { $in: noticeCategoryList };
 		if (noticeStatus) match.noticeStatus = noticeStatus;
 		if (text) match.$or = this.textFilter(text);
 		return await this.aggregateNotices(match, input, true);
 	}
 
 	private textFilter(text: string): T[] {
-		const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-		const regex = new RegExp(escaped, 'i');
+		const regex = textRegex(text);
 		return [{ noticeTitle: { $regex: regex } }, { noticeContent: { $regex: regex } }];
 	}
 

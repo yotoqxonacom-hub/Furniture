@@ -11,8 +11,8 @@ export class Notice {
 	@Field(() => NoticeCategory)
 	noticeCategory: NoticeCategory;
 
-	@Field(() => NoticeStatus)
-	noticeStatus: NoticeStatus;
+	@Field(() => NoticeStatus, { nullable: true })
+	noticeStatus?: NoticeStatus; // nullable: see the note below about rows added directly in MongoDB
 
 	@Field(() => String)
 	noticeTitle: string;

@@ -131,8 +131,9 @@ export class NotificationService {
 		if (notificationGroup) match.notificationGroup = notificationGroup;
 
 		const result = await this.aggregateNotifications(match, input, true);
+		// unread count follows the type / group filters, so the "Unread (N)" tab matches what it will show
 		result.unreadCount = await this.notificationModel
-			.countDocuments({ notificationStatus: NotificationStatus.WAIT })
+			.countDocuments({ ...match, notificationStatus: NotificationStatus.WAIT })
 			.exec();
 		return result;
 	}
