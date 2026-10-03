@@ -25,6 +25,8 @@ export class SocketGateway implements OnGatewayInit {
 	private logger: Logger = new Logger('SocketEventsGateway');
 	private summaryClient: number = 0;
 	private clientsAuthMap = new Map<WebSocket, Member | null>();
+	/** memberId -> open sockets of that member (several tabs / devices) */
+	private memberSockets = new Map<string, Set<WebSocket>>();
 	private messagesList: MessagePayload[] = [];
 
 	constructor(private authService: AuthService) {}
@@ -52,6 +54,11 @@ export class SocketGateway implements OnGatewayInit {
 		const authMember: Member | null = await this.retrieveAuth(req);
 		this.summaryClient++;
 		this.clientsAuthMap.set(client, authMember);
+		if (authMember?._id) {
+			const key = String(authMember._id);
+			if (!this.memberSockets.has(key)) this.memberSockets.set(key, new Set());
+			this.memberSockets.get(key)!.add(client);
+		}
 
 		const clientNick: string = authMember?.memberNick ?? 'Guest';
 		this.logger.verbose(`Connected [${clientNick}] & total: [${this.summaryClient}]`);
@@ -70,6 +77,12 @@ export class SocketGateway implements OnGatewayInit {
 		const authMember = this.clientsAuthMap.get(client) ?? null;
 		this.summaryClient = Math.max(0, this.summaryClient - 1);
 		this.clientsAuthMap.delete(client);
+		if (authMember?._id) {
+			const key = String(authMember._id);
+			const sockets = this.memberSockets.get(key);
+			sockets?.delete(client);
+			if (sockets && sockets.size === 0) this.memberSockets.delete(key);
+		}
 
 		const clientNick: string = authMember?.memberNick ?? 'Guest';
 		this.logger.verbose(`Disconnected [${clientNick}] & total: [${this.summaryClient}]`);
@@ -97,6 +110,21 @@ export class SocketGateway implements OnGatewayInit {
 		if (this.messagesList.length > HISTORY_LIMIT) this.messagesList.splice(0, this.messagesList.length - HISTORY_LIMIT);
 
 		this.emitMessage(newMessage);
+	}
+
+	/** Push an event to every open socket of the given members (private messages, read receipts) */
+	public emitToMembers(memberIds: Array<string | { toString(): string }>, payload: Record<string, any>): void {
+		const data = JSON.stringify(payload);
+		const unique = new Set(memberIds.map((id) => String(id)));
+		unique.forEach((id) => {
+			this.memberSockets.get(id)?.forEach((client) => {
+				if (client.readyState === WebSocket.OPEN) client.send(data);
+			});
+		});
+	}
+
+	public isOnline(memberId: string | { toString(): string }): boolean {
+		return (this.memberSockets.get(String(memberId))?.size ?? 0) > 0;
 	}
 
 	private broadcastMessage(sender: WebSocket, message: InfoPayload | MessagePayload) {
