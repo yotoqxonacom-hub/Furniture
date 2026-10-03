@@ -10,6 +10,22 @@ import { ComponentsModule } from './components/components.module';
 import { DatabaseModule } from './database/database.module';
 import { T } from './libs/types/common';
 import { SocketModule } from './socket/socket.module';
+import { Message } from './libs/enums/common.enum';
+
+/**
+ * Always a plain string for the client. Nest puts the HttpException body in extensions.originalError
+ * ({ message, error, statusCode }) and class-validator puts an array of messages there;
+ * returning that object made the frontend show "[object Object]".
+ */
+export const readableErrorMessage = (error: T): string => {
+	const ext = error?.extensions ?? {};
+	const candidates = [ext.originalError?.message, ext.exception?.response?.message, ext.response?.message, error?.message];
+	for (const value of candidates) {
+		if (Array.isArray(value) && value.length) return value.map(String).join(', ');
+		if (typeof value === 'string' && value.trim()) return value;
+	}
+	return Message.SOMETHING_WENT_WRONG;
+};
 
 @Module({
 	imports: [
@@ -21,16 +37,7 @@ import { SocketModule } from './socket/socket.module';
 			uploads: false,
 			autoSchemaFile: true,
 			formatError: (error: T) => {
-				const graphQLFormattedError = {
-					message:
-						error?.extensions?.exception?.response?.message ||
-						error?.extensions?.response?.message ||
-						error?.extensions.originalError ||
-						error?.message,
-					extensions: {
-						code: error?.extensions?.code,
-					},
-				};
+				const graphQLFormattedError = { message: readableErrorMessage(error), extensions: { code: error?.extensions?.code } };
 				console.log('GRAPHQL GLOBAL ERR:', graphQLFormattedError);
 				return graphQLFormattedError;
 			},

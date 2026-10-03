@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { randomUUID } from 'crypto';
 import * as WebSocket from 'ws';
 import { Server } from 'ws';
 import { AuthService } from '../components/auth/auth.service';
@@ -7,8 +8,12 @@ import { Member } from '../libs/dto/member/member';
 
 interface MessagePayload {
 	event: string;
+	id: string;
 	text: string;
 	memberData: Member | null;
+	createdAt: string;
+	/** true once someone other than the author has seen it (client shows two ticks) */
+	read: boolean;
 }
 
 interface InfoPayload {
@@ -28,6 +33,8 @@ export class SocketGateway implements OnGatewayInit {
 	/** memberId -> open sockets of that member (several tabs / devices) */
 	private memberSockets = new Map<string, Set<WebSocket>>();
 	private messagesList: MessagePayload[] = [];
+	/** message id -> who wrote it (member id, or the socket for guests) */
+	private messageAuthors = new Map<string, string | WebSocket>();
 
 	constructor(private authService: AuthService) {}
 
@@ -102,14 +109,50 @@ export class SocketGateway implements OnGatewayInit {
 		if (!text) return;
 
 		const authMember = this.clientsAuthMap.get(client) ?? null;
-		const newMessage: MessagePayload = { event: 'message', text, memberData: authMember };
+		const newMessage: MessagePayload = {
+			event: 'message',
+			id: randomUUID(),
+			text,
+			memberData: authMember,
+			createdAt: new Date().toISOString(),
+			read: false,
+		};
+		this.messageAuthors.set(newMessage.id, this.authorKey(client));
 
 		this.logger.log(`NEW message: [${authMember?.memberNick ?? 'Guest'}] ${text}`);
 
 		this.messagesList.push(newMessage);
-		if (this.messagesList.length > HISTORY_LIMIT) this.messagesList.splice(0, this.messagesList.length - HISTORY_LIMIT);
+		if (this.messagesList.length > HISTORY_LIMIT) {
+			const removed = this.messagesList.splice(0, this.messagesList.length - HISTORY_LIMIT);
+			removed.forEach((message) => this.messageAuthors.delete(message.id));
+		}
 
 		this.emitMessage(newMessage);
+	}
+
+	/**
+	 * Community read receipts: a client reports the ids it has on screen.
+	 * The first reader who is not the author marks the message read and everyone gets `publicRead`.
+	 */
+	@SubscribeMessage('readPublic')
+	public handleReadPublic(client: WebSocket, payload: any): void {
+		if (!Array.isArray(payload)) return;
+		const reader = this.authorKey(client);
+		const newlyRead: string[] = [];
+		payload.slice(0, HISTORY_LIMIT).forEach((id) => {
+			const message = this.messagesList.find((item) => item.id === id);
+			if (!message || message.read) return;
+			if (this.messageAuthors.get(id) === reader) return; // reading your own message does not count
+			message.read = true;
+			newlyRead.push(id);
+		});
+		if (newlyRead.length) this.emitMessage({ event: 'publicRead', ids: newlyRead });
+	}
+
+	/** members are identified by id (all their tabs are one reader), guests by their socket */
+	private authorKey(client: WebSocket): string | WebSocket {
+		const member = this.clientsAuthMap.get(client);
+		return member?._id ? String(member._id) : client;
 	}
 
 	/** Push an event to every open socket of the given members (private messages, read receipts) */
@@ -133,7 +176,7 @@ export class SocketGateway implements OnGatewayInit {
 		});
 	}
 
-	private emitMessage(message: InfoPayload | MessagePayload) {
+	private emitMessage(message: InfoPayload | MessagePayload | { event: 'publicRead'; ids: string[] }) {
 		this.server.clients.forEach((client) => {
 			if (client.readyState === WebSocket.OPEN) client.send(JSON.stringify(message));
 		});
