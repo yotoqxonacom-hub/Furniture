@@ -2,6 +2,7 @@ import { NotificationService } from '../notification/notification.service';
 import { NotificationGroup, NotificationType } from '../../libs/enums/notification.enum';
 import {
 	BadRequestException,
+	ForbiddenException,
 	Injectable,
 	InternalServerErrorException,
 } from '@nestjs/common';
@@ -42,15 +43,22 @@ export class MemberService {
 	public async signup(input: MemberInput): Promise<Member> {
 		// TODO: Hash password
 		input.memberPassword = await this.authService.hashPassword(input.memberPassword);
+		let result;
 		try {
-			const result = await this.memberModel.create(input);
-			// TODO: Authentication via TOKEN
-			result.accessToken = await this.authService.createToken(result);
-			return result;
-		} catch (err) {
-			console.log('Error, Service.model:', err instanceof Error ? err.message : err);
-			throw new BadRequestException(Message.USED_MEMBER_NICK_OR_PHONE);
+			result = await this.memberModel.create(input);
+		} catch (err: any) {
+			console.log('Error, signup:', err instanceof Error ? err.message : err);
+			// duplicate key (E11000): say which field is taken
+			if (err?.code === 11000) {
+				const field = Object.keys(err.keyPattern ?? err.keyValue ?? {})[0];
+				if (field === 'memberNick') throw new BadRequestException(Message.USED_MEMBER_NICK);
+				if (field === 'memberPhone') throw new BadRequestException(Message.USED_MEMBER_PHONE);
+				throw new BadRequestException(Message.USED_MEMBER_NICK_OR_PHONE);
+			}
+			throw new BadRequestException(Message.CREATE_FAILED);
 		}
+		result.accessToken = await this.authService.createToken(result);
+		return result;
 	}
 
 	public async login(input: LoginInput): Promise<Member> {
@@ -61,9 +69,9 @@ export class MemberService {
 			.exec();
 
 		if (!response || response.memberStatus === MemberStatus.DELETE) {
-			throw new InternalServerErrorException(Message.NO_MEMBER_NICK);
+			throw new BadRequestException(Message.NO_MEMBER_NICK);
 		} else if (response.memberStatus === MemberStatus.BLOCK) {
-			throw new InternalServerErrorException(Message.BLOCKED_USER);
+			throw new ForbiddenException(Message.BLOCKED_USER);
 		}
 
 		// TODO: Compare password
@@ -71,7 +79,7 @@ export class MemberService {
 			memberPassword,
 			response.memberPassword!,
 		);
-		if (!isMatch) throw new InternalServerErrorException(Message.WRONG_PASSWORD);
+		if (!isMatch) throw new BadRequestException(Message.WRONG_PASSWORD);
 
 		// TODO: Authentication via TOKEN
 		response.accessToken = await this.authService.createToken(response);
