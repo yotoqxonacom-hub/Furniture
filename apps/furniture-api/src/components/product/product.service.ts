@@ -101,6 +101,13 @@ export class ProductService {
 			null,
 			targetProduct.memberId,
 		);
+		// seller card on the product page shows Follow / Unfollow
+		if (memberId && targetProduct.memberData) {
+			targetProduct.memberData.meFollowed = await this.memberService.checkSubscription(
+				memberId,
+				targetProduct.memberId,
+			);
+		}
 		return targetProduct;
 	}
 

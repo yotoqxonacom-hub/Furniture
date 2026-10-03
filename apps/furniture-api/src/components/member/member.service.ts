@@ -26,7 +26,7 @@ import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeService } from '../like/like.service';
 import { Follower, Following, MeFollowed } from '../../libs/dto/follow/follow';
-import { lookupAuthMemberLiked } from '../../libs/config';
+import { lookupAuthMemberFollowed, lookupAuthMemberLiked } from '../../libs/config';
 
 @Injectable()
 export class MemberService {
@@ -133,7 +133,8 @@ export class MemberService {
 		return targetMember;
 	}
 
-	private async checkSubscription(
+	/** [] or [{ myFollowing: true }] — used by getMember and by product / article detail for their author */
+	public async checkSubscription(
 		followerId: ObjectId,
 		followingId: ObjectId,
 	): Promise<MeFollowed[]> {
@@ -164,6 +165,8 @@ export class MemberService {
 							{ $limit: input.limit },
 							// meLiked
 							lookupAuthMemberLiked(memberId),
+							// meFollowed: lets the sellers list show Follow / Unfollow
+							lookupAuthMemberFollowed({ followerId: memberId, followingId: '$_id' }),
 						],
 						metaCounter: [{ $count: 'total' }],
 					},

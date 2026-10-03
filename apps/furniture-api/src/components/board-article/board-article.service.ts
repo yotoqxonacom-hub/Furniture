@@ -103,6 +103,13 @@ export class BoardArticleService {
 			null,
 			targetBoardArticle.memberId,
 		);
+		// author box on the article page shows Follow / Unfollow
+		if (memberId && targetBoardArticle.memberData) {
+			targetBoardArticle.memberData.meFollowed = await this.memberService.checkSubscription(
+				memberId,
+				targetBoardArticle.memberId,
+			);
+		}
 		return targetBoardArticle;
 	}
 
