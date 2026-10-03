@@ -5,6 +5,7 @@ import { Notification, Notifications } from '../../libs/dto/notification/notific
 import {
 	AllNotificationsInquiry,
 	NotificationsInquiry,
+	NotifyOrderInput,
 	NotifyTargetInput,
 } from '../../libs/dto/notification/notification.input';
 import {
@@ -15,6 +16,17 @@ import {
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { T } from '../../libs/types/common';
 import { lookupAuthor, lookupReceiver } from '../../libs/config';
+import { OrderStatus } from '../../libs/enums/order.enum';
+
+/** English title kept in the DB; the frontend rebuilds a translated one from orderStatus */
+const ORDER_ACTIONS: Record<OrderStatus, string> = {
+	[OrderStatus.PENDING]: 'created an order',
+	[OrderStatus.PAID]: 'placed a new order',
+	[OrderStatus.PROCESSING]: 'is preparing your order',
+	[OrderStatus.SHIPPED]: 'shipped your order',
+	[OrderStatus.DELIVERED]: 'marked your order as delivered',
+	[OrderStatus.CANCELLED]: 'cancelled the order',
+};
 
 @Injectable()
 export class NotificationService {
@@ -83,6 +95,28 @@ export class NotificationService {
 			await this.notificationModel.create(data);
 		} catch (err) {
 			console.log('Error, notifyTarget:', err instanceof Error ? err.message : err);
+		}
+	}
+
+	/** Order events (new order for the seller, status changes for the buyer). Never throws. */
+	public async notifyOrder(input: NotifyOrderInput): Promise<void> {
+		try {
+			const { authorId, receiverId, orderId, orderStatus, summary } = input;
+			if (String(authorId) === String(receiverId)) return;
+			const author = await this.memberModel.findById(authorId).select('memberNick').lean<T>().exec();
+
+			await this.notificationModel.create({
+				notificationType: NotificationType.ORDER,
+				notificationGroup: NotificationGroup.ORDER,
+				notificationTitle: `${author?.memberNick ?? 'Someone'} ${ORDER_ACTIONS[orderStatus]}`,
+				notificationDesc: summary,
+				authorId,
+				receiverId,
+				orderId,
+				orderStatus,
+			});
+		} catch (err) {
+			console.log('Error, notifyOrder:', err instanceof Error ? err.message : err);
 		}
 	}
 

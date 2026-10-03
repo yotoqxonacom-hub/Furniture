@@ -4,6 +4,7 @@ import {
 	BadRequestException,
 	Injectable,
 	InternalServerErrorException,
+	OnModuleInit,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
@@ -34,7 +35,7 @@ import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
 
 @Injectable()
-export class ProductService {
+export class ProductService implements OnModuleInit {
 	constructor(
 		@InjectModel('Product') private readonly productModel: Model<Product>,
 		private memberService: MemberService,
@@ -42,6 +43,11 @@ export class ProductService {
 		private likeService: LikeService,
 		private readonly notificationService: NotificationService,
 	) { }
+
+	/** products created before stock existed are single pieces */
+	public async onModuleInit(): Promise<void> {
+		await this.productModel.updateMany({ productStock: { $exists: false } }, { $set: { productStock: 1 } }).exec();
+	}
 
 	public async createProduct(input: ProductInput): Promise<Product> {
 		try {
@@ -380,5 +386,46 @@ export class ProductService {
 		return await this.productModel
 			.findByIdAndUpdate(_id, { $inc: { [targetKey]: modifier } }, { new: true })
 			.exec();
+	}
+
+	/** STOCK (used by orders) */
+
+	/**
+	 * Takes `quantity` pieces in one atomic update, so two buyers can't get the last piece.
+	 * When the stock reaches 0 the product becomes SOLD. Returns false when there isn't enough stock.
+	 */
+	public async reserveStock(productId: ObjectId, quantity: number): Promise<boolean> {
+		const product = await this.productModel
+			.findOneAndUpdate(
+				{ _id: productId, productStatus: ProductStatus.ACTIVE, productStock: { $gte: quantity } },
+				{ $inc: { productStock: -quantity } },
+				{ new: true },
+			)
+			.exec();
+		if (!product) return false;
+
+		if (product.productStock === 0) {
+			await this.productModel
+				.updateOne({ _id: productId }, { productStatus: ProductStatus.SOLD, soldAt: new Date() })
+				.exec();
+			await this.memberService.memberStatsEditor({ _id: product.memberId, targetKey: 'memberProducts', modifier: -1 });
+		}
+		return true;
+	}
+
+	/** gives pieces back (cancelled / expired order); a product sold out by orders becomes ACTIVE again */
+	public async releaseStock(productId: ObjectId, quantity: number): Promise<void> {
+		const product = await this.productModel
+			.findOneAndUpdate({ _id: productId }, { $inc: { productStock: quantity } }, { new: true })
+			.exec();
+		// only a product that the orders themselves sold out (stock was 0) is reactivated;
+		// a product the seller marked SOLD by hand stays SOLD
+		const wasSoldOut = product?.productStatus === ProductStatus.SOLD && product.productStock === quantity;
+		if (!wasSoldOut) return;
+
+		await this.productModel
+			.updateOne({ _id: productId }, { productStatus: ProductStatus.ACTIVE, $unset: { soldAt: 1 } })
+			.exec();
+		await this.memberService.memberStatsEditor({ _id: product.memberId, targetKey: 'memberProducts', modifier: 1 });
 	}
 }

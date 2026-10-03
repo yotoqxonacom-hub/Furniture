@@ -19,6 +19,15 @@ export enum Message {
 	NOT_ALLOWED_REQUEST = 'Not Allowed Request!',
 	PROVIDE_ALLOWED_FORMAT = 'Please provide jpg, jpeg or png images!',
 	SELF_SUBSCRIPTION_DENIED = 'Self subscription is denied!',
+
+	CART_EMPTY = 'Your cart is empty!',
+	CART_LIMIT = 'Quantity is over the allowed limit!',
+	OUT_OF_STOCK = 'Not enough stock for this product!',
+	PRODUCT_NOT_AVAILABLE = 'This product is no longer available!',
+	OWN_PRODUCT = 'You cannot buy your own product!',
+	ORDER_NOT_PAYABLE = 'Only your unpaid orders can be paid!',
+	ORDER_STATUS_DENIED = 'This order status change is not allowed!',
+	PAYMENT_FAILED = 'Payment failed, please try again!',
 }
 
 export enum Direction {

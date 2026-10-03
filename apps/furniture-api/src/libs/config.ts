@@ -32,6 +32,22 @@ export const availableCommentSorts = ['createdAt', 'updatedAt'];
 export const availableReportSorts = ['createdAt', 'updatedAt'];
 export const availableNoticeSorts = ['createdAt', 'updatedAt', 'noticeTitle'];
 export const availableNotificationSorts = ['createdAt', 'updatedAt'];
+export const availableOrderSorts = ['createdAt', 'updatedAt', 'orderTotal'];
+export const availablePaymentSorts = ['createdAt', 'paymentAmount'];
+
+// ORDER RULES (prices are in the same currency as productPrice)
+export const ORDER_RULES = {
+	/** most pieces of one product a member can keep in the cart */
+	MAX_CART_QUANTITY: 10,
+	/** delivery fee per seller order, waived from FREE_DELIVERY_FROM */
+	DELIVERY_FEE: 50,
+	FREE_DELIVERY_FROM: 1000,
+	/** unpaid orders are cancelled and their stock released after this many minutes */
+	PENDING_TTL_MINUTES: 30,
+};
+
+export const deliveryFeeFor = (subtotal: number): number =>
+	subtotal >= ORDER_RULES.FREE_DELIVERY_FROM ? 0 : ORDER_RULES.DELIVERY_FEE;
 
 // IMAGE CONFIGURATION (config.js)
 import { v4 as uuidv4 } from 'uuid';
@@ -199,5 +215,32 @@ export const lookupReceiver = {
 		localField: 'receiverId',
 		foreignField: '_id',
 		as: 'receiverData',
+	},
+};
+
+export const lookupProduct = {
+	$lookup: {
+		from: 'products',
+		localField: 'productId',
+		foreignField: '_id',
+		as: 'productData',
+	},
+};
+
+export const lookupAgent = {
+	$lookup: {
+		from: 'members',
+		localField: 'agentId',
+		foreignField: '_id',
+		as: 'agentData',
+	},
+};
+
+export const lookupOrderItems = {
+	$lookup: {
+		from: 'orderItems',
+		localField: '_id',
+		foreignField: 'orderId',
+		as: 'orderItems',
 	},
 };

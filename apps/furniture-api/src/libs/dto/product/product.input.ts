@@ -1,5 +1,5 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
-import { IsIn, IsInt, IsNotEmpty, IsOptional, Length, Min } from 'class-validator';
+import { IsIn, IsInt, IsNotEmpty, IsOptional, Length, Max, Min } from 'class-validator';
 import {
 	ProductLocation,
 	ProductStatus,
@@ -48,6 +48,13 @@ export class ProductInput {
 	@Min(1)
 	@Field(() => Int)
 	productRooms: number;
+
+	@IsOptional()
+	@IsInt()
+	@Min(1)
+	@Max(999)
+	@Field(() => Int, { nullable: true })
+	productStock?: number;
 
 	@IsNotEmpty()
 	@Field(() => [String])

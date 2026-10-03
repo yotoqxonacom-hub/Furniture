@@ -41,6 +41,9 @@ export class Product {
 	productRooms: number;
 
 	@Field(() => Int)
+	productStock: number;
+
+	@Field(() => Int)
 	productViews: number;
 
 	@Field(() => Int)
