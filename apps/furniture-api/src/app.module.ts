@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver } from '@nestjs/apollo';
 import { AppResolver } from './app.resolver';
@@ -13,6 +14,7 @@ import { SocketModule } from './socket/socket.module';
 @Module({
 	imports: [
 		ConfigModule.forRoot(),
+		ScheduleModule.forRoot(), // expires unpaid orders (OrderService)
 		GraphQLModule.forRoot({
 			driver: ApolloDriver,
 			playground: true,

@@ -11,6 +11,9 @@ import { ReportModule } from './report/report.module';
 import { NoticeModule } from './notice/notice.module';
 import { NotificationModule } from './notification/notification.module';
 import { MessageModule } from './message/message.module';
+import { CartModule } from './cart/cart.module';
+import { OrderModule } from './order/order.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
 	imports: [
@@ -26,6 +29,9 @@ import { MessageModule } from './message/message.module';
 		NoticeModule,
 		NotificationModule,
 		MessageModule,
+		CartModule,
+		OrderModule,
+		PaymentModule,
 	],
 })
 export class ComponentsModule {}

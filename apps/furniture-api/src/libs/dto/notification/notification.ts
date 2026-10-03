@@ -1,6 +1,7 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { ObjectId } from 'mongoose';
 import { NotificationGroup, NotificationStatus, NotificationType } from '../../enums/notification.enum';
+import { OrderStatus } from '../../enums/order.enum';
 import { Member, TotalCounter } from '../member/member';
 
 @ObjectType()
@@ -34,6 +35,12 @@ export class Notification {
 
 	@Field(() => String, { nullable: true })
 	articleId?: ObjectId;
+
+	@Field(() => String, { nullable: true })
+	orderId?: ObjectId;
+
+	@Field(() => OrderStatus, { nullable: true })
+	orderStatus?: OrderStatus;
 
 	@Field(() => Date)
 	createdAt: Date;

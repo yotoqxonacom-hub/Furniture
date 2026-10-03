@@ -2,6 +2,7 @@ import { Field, InputType, Int } from '@nestjs/graphql';
 import { IsIn, IsNotEmpty, IsOptional, Min } from 'class-validator';
 import { ObjectId } from 'mongoose';
 import { NotificationGroup, NotificationStatus, NotificationType } from '../../enums/notification.enum';
+import { OrderStatus } from '../../enums/order.enum';
 import { Direction } from '../../enums/common.enum';
 import { availableNotificationSorts } from '../../config';
 
@@ -11,6 +12,16 @@ export interface NotifyTargetInput {
 	notificationGroup: NotificationGroup;
 	authorId: ObjectId;
 	refId: ObjectId;
+}
+
+/** internal: used by the order service */
+export interface NotifyOrderInput {
+	authorId: ObjectId;
+	receiverId: ObjectId;
+	orderId: ObjectId;
+	orderStatus: OrderStatus;
+	/** e.g. "Oslo sofa +1 more" */
+	summary: string;
 }
 
 @InputType()
