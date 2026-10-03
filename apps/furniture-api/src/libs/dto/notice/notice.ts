@@ -20,14 +20,16 @@ export class Notice {
 	@Field(() => String)
 	noticeContent: string;
 
-	@Field(() => String)
-	memberId: ObjectId;
+	/* nullable: rows added directly in MongoDB (e.g. Compass) may lack these,
+	   and one null in a non-null field would fail the whole getNotices list */
+	@Field(() => String, { nullable: true })
+	memberId?: ObjectId;
 
-	@Field(() => Date)
-	createdAt: Date;
+	@Field(() => Date, { nullable: true })
+	createdAt?: Date;
 
-	@Field(() => Date)
-	updatedAt: Date;
+	@Field(() => Date, { nullable: true })
+	updatedAt?: Date;
 
 	/** from aggregation **/
 
