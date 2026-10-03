@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, ObjectId } from 'mongoose';
+import { Model, ObjectId, PipelineStage } from 'mongoose';
 import { Payment, Payments } from '../../libs/dto/payment/payment';
 import { ChargeInput, PaymentsInquiry } from '../../libs/dto/payment/payment.input';
 import { PaymentStatus } from '../../libs/enums/payment.enum';
@@ -76,7 +76,7 @@ export class PaymentService {
 
 	private async aggregatePayments(match: T, input: PaymentsInquiry, withMember = false): Promise<Payments> {
 		const sort: T = { [input.sort ?? 'createdAt']: input.direction ?? Direction.DESC };
-		const list: T[] = [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }];
+		const list: PipelineStage.FacetPipelineStage[] = [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }];
 		if (withMember) list.push(lookupMember, { $unwind: { path: '$memberData', preserveNullAndEmptyArrays: true } });
 
 		const result: Payments[] = await this.paymentModel

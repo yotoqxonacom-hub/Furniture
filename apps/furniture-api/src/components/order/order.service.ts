@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { Model, ObjectId } from 'mongoose';
+import { Model, ObjectId, PipelineStage } from 'mongoose';
 import { Order, OrderItem, Orders } from '../../libs/dto/order/order';
 import {
 	AllOrdersInquiry,
@@ -351,7 +351,7 @@ export class OrderService {
 		join: { agent?: boolean; member?: boolean },
 	): Promise<Orders> {
 		const sort: T = { [input.sort ?? 'createdAt']: input.direction ?? Direction.DESC };
-		const list: T[] = [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }, lookupOrderItems];
+		const list: PipelineStage.FacetPipelineStage[] = [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }, lookupOrderItems];
 		if (join.agent) list.push(lookupAgent, { $unwind: { path: '$agentData', preserveNullAndEmptyArrays: true } });
 		if (join.member) list.push(lookupMember, { $unwind: { path: '$memberData', preserveNullAndEmptyArrays: true } });
 
