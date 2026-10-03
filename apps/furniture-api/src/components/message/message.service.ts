@@ -10,6 +10,14 @@ import { T } from '../../libs/types/common';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 import { SocketGateway } from '../../socket/socket.gateway';
 
+interface LeanMember {
+	_id: ObjectId;
+	memberStatus: MemberStatus;
+	memberNick?: string;
+	memberImage?: string;
+	memberType?: string;
+}
+
 /** both members always get the same key, whoever writes first */
 export const makeConversationKey = (a: ObjectId | string, b: ObjectId | string): string =>
 	[String(a), String(b)].sort().join('_');
@@ -30,8 +38,8 @@ export class MessageService {
 		if (!text) throw new BadRequestException(Msg.BAD_REQUEST);
 
 		const [sender, receiver] = await Promise.all([
-			this.memberModel.findById(senderId).select('memberStatus memberNick memberImage memberType').lean().exec(),
-			this.memberModel.findById(receiverId).select('memberStatus').lean().exec(),
+			this.memberModel.findById(senderId).select('memberStatus memberNick memberImage memberType').lean<LeanMember>().exec(),
+			this.memberModel.findById(receiverId).select('memberStatus').lean<LeanMember>().exec(),
 		]);
 		if (!sender || sender.memberStatus !== MemberStatus.ACTIVE) throw new BadRequestException(Msg.BLOCKED_USER);
 		if (!receiver || receiver.memberStatus !== MemberStatus.ACTIVE) throw new BadRequestException(Msg.NO_DATA_FOUND);

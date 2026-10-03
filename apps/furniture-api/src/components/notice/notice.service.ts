@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, ObjectId } from 'mongoose';
+import { Model, ObjectId, PipelineStage } from 'mongoose';
 import { Notice, Notices } from '../../libs/dto/notice/notice';
 import { AllNoticesInquiry, NoticeInput, NoticesInquiry } from '../../libs/dto/notice/notice.input';
 import { NoticeUpdate } from '../../libs/dto/notice/notice.update';
@@ -80,7 +80,7 @@ export class NoticeService {
 		withMember = false,
 	): Promise<Notices> {
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
-		const listPipeline: T[] = [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }];
+		const listPipeline: PipelineStage.FacetPipelineStage[] = [{ $skip: (input.page - 1) * input.limit }, { $limit: input.limit }];
 		if (withMember) {
 			listPipeline.push(lookupMember, {
 				$unwind: { path: '$memberData', preserveNullAndEmptyArrays: true },

@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, ObjectId } from 'mongoose';
+import { Model, ObjectId, PipelineStage } from 'mongoose';
 import { Notification, Notifications } from '../../libs/dto/notification/notification';
 import {
 	AllNotificationsInquiry,
@@ -32,7 +32,7 @@ export class NotificationService {
 	public async notifyTarget(input: NotifyTargetInput): Promise<void> {
 		try {
 			const { notificationType, notificationGroup, authorId, refId } = input;
-			const author = await this.memberModel.findById(authorId).select('memberNick').lean().exec();
+			const author = await this.memberModel.findById(authorId).select('memberNick').lean<T>().exec();
 			if (!author) return;
 
 			const data: T = {
@@ -44,7 +44,7 @@ export class NotificationService {
 
 			switch (notificationGroup) {
 				case NotificationGroup.PRODUCT: {
-					const product = await this.productModel.findById(refId).select('memberId productTitle').lean().exec();
+					const product = await this.productModel.findById(refId).select('memberId productTitle').lean<T>().exec();
 					if (!product) return;
 					data.receiverId = product.memberId;
 					data.productId = refId;
@@ -56,7 +56,7 @@ export class NotificationService {
 					const article = await this.boardArticleModel
 						.findById(refId)
 						.select('memberId articleTitle')
-						.lean()
+						.lean<T>()
 						.exec();
 					if (!article) return;
 					data.receiverId = article.memberId;
@@ -149,7 +149,7 @@ export class NotificationService {
 		withReceiver = false,
 	): Promise<Notifications> {
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
-		const listPipeline: T[] = [
+		const listPipeline: PipelineStage.FacetPipelineStage[] = [
 			{ $skip: (input.page - 1) * input.limit },
 			{ $limit: input.limit },
 			lookupAuthor,
