@@ -42,7 +42,7 @@ export class SocketGateway implements OnGatewayInit {
 	server: Server;
 
 	public afterInit() {
-		this.logger.log(`WebSocket Server Initialized & total: [${this.summaryClient}]`);
+		this.logger.verbose(`WebSocket Server Initialized & total: [${this.summaryClient}]`);
 	}
 
 	/** token comes as a query param: ws://host:port?token=JWT ; guests have no valid token */
