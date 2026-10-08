@@ -3,7 +3,7 @@
 	"collection": "@nestjs/schematics",
 	"sourceRoot": "apps/furniture-api/src",
 	"compilerOptions": {
-		"deleteOutDir": true,
+		"deleteOutDir": false,
 		"webpack": true,
 		"tsConfigPath": "apps/furniture-api/tsconfig.app.json"
 	},
